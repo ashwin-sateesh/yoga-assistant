@@ -43,7 +43,6 @@ The architecture of the Yoga Assistant is built to efficiently handle both text 
      - **VAE Model:** 83,653,863 parameters.
      - **Total Parameters:** 1,066,235,307 parameters.
    - **Distillation Process:** For distillation, the UNet model was pruned while the Text Encoder and VAE components were kept intact. The model was then distilled using a distillation loss function, reducing the overall model size and improving inference time by 2x.
-.
    - For training details, refer to the [official Hugging Face documentation](https://github.com/huggingface/diffusers/tree/main/examples/text_to_image).
    - CLIP scores were used to evaluate the text-to-image response quality.
 
