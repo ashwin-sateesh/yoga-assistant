@@ -11,7 +11,7 @@ The architecture of the Yoga Assistant is built to efficiently handle both text 
 <img src="https://github.com/ashwin-sateesh/yoga-assistant/blob/main/assets/Yoga%20Assistant%20Workflow.png" alt="Yoga Assistant Architecture" width="700" height="900">
 
 1. **Input Query & Query Type Classification:**
-   - User queries are classified into to know whether it is a text-based or image-based query.
+   - User queries are classified to know whether it is a text-based or image-based query.
 
 2. **Text Query Processing:**
    - The text query processing is handled through a sophisticated, queue-based fine-tuning system:
