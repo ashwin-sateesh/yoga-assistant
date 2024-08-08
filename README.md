@@ -7,7 +7,8 @@ The Yoga Assistant is a multimodal tool designed to provide accurate and real-ti
 ## Architecture Overview
 
 The architecture of the Yoga Assistant is built to efficiently handle both text and image queries through a scalable pipeline:
-![Yoga Assistant Architecture](https://github.com/ashwin-sateesh/yoga-assistant/blob/main/assets/Yoga%20Assistant%20Workflow.png)
+
+<img src="https://github.com/ashwin-sateesh/yoga-assistant/blob/main/assets/Yoga%20Assistant%20Workflow.png" alt="Yoga Assistant Architecture" width="600" height="400">
 
 1. **Input Query & Query Type Classification:**
    - User queries are classified into to know whether it is a text-based or image-based query.
