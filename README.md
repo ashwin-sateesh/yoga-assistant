@@ -1,4 +1,3 @@
-# yoga-assistant
 # Yoga Assistant
 
 ## Objective
@@ -8,6 +7,7 @@ The Yoga Assistant is designed to provide accurate and real-time responses to yo
 ## Architecture Overview
 
 The architecture of the Yoga Assistant is built to efficiently handle both text and image queries through a scalable pipeline:
+![Yoga Assistant Architecture](Yoga_Assistant_Workflow.png)
 
 1. **Input Query & Query Type Classification:**
    - User queries are classified into text or image categories.
