@@ -7,7 +7,7 @@ The Yoga Assistant is designed to provide accurate and real-time responses to yo
 ## Architecture Overview
 
 The architecture of the Yoga Assistant is built to efficiently handle both text and image queries through a scalable pipeline:
-![Yoga Assistant Architecture](Yoga_Assistant_Workflow.png)
+![Yoga Assistant Architecture](https://github.com/ashwin-sateesh/yoga-assistant/blob/main/assets/Yoga%20Assistant%20Workflow.png)
 
 1. **Input Query & Query Type Classification:**
    - User queries are classified into text or image categories.
@@ -27,12 +27,13 @@ The architecture of the Yoga Assistant is built to efficiently handle both text 
 1. **Stable Diffusion Fine-tuning:**
    - Fine-tuned on yoga posture images, the Stable Diffusion model was distilled to improve performance.
    - For training details, refer to the [official Hugging Face documentation](https://github.com/huggingface/diffusers/tree/main/examples/text_to_image).
+   - CLIP scores were used to evaluate the text-to-image response quality.
 
 2. **GPT-3.5 Fine-tuning:**
    - The GPT-3.5 Turbo model was fine-tuned using yoga-related datasets.
    - Evaluation metrics included perplexity scores and semantic similarity to ensure high-quality responses.
-   - CLIP scores were used to evaluate the text-to-image response quality.
+   
 
 ## Acknowledgments
 
-This project leverages resources from the [Hugging Face diffusers repository](https://github.com/huggingface/diffusers). Special thanks to the developers and contributors to these tools.
+This project leverages resources from the [Hugging Face diffusers repository](https://github.com/huggingface/diffusers) and [OpenAI Finetuning Documentation](https://platform.openai.com/docs/guides/fine-tuning). Special thanks to the developers and contributors to these tools.
