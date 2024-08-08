@@ -35,7 +35,7 @@ The architecture of the Yoga Assistant is built to efficiently handle both text 
 ## Model Training & Evaluation
 
 1. **Stable Diffusion Fine-tuning:**
-   - The Stable Diffusion model (CompVis/stable-diffusion-v1-4) was fine-tuned on a set of yoga images and corresponding text prompts. The fine-tuning was carried out at a resolution of 512x512 pixels for 3,000 steps, using the quantized `float16` datatype to optimize memory usage.
+   - The Stable Diffusion model (CompVis/stable-diffusion-v1-4) was fine-tuned on a set of yoga images and corresponding text prompts. The fine-tuning was carried out at a resolution of 512x512 pixels for 3,000 steps, using the quantized `float16` datatype and A100 GPUs to optimize memory usage.
    - The architecture of the Stable Diffusion model includes the following components:
      - **UNet Model:** 859,520,964 parameters.
      - **Text Encoder:** 123,060,480 parameters.
