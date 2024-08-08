@@ -2,7 +2,7 @@
 
 ## Objective
 
-The Yoga Assistant is designed to provide accurate and real-time responses to yoga-related queries, offering both text and image outputs. The assistant leverages fine-tuned GPT-3.5 for text generation and a distilled Stable Diffusion model for image generation, ensuring high performance and quick response times.
+The Yoga Assistant is a multimodal tool designed to provide accurate and real-time responses to yoga-related queries, offering both text and image outputs. The assistant leverages fine-tuned GPT-3.5 for text generation and a distilled Stable Diffusion model for image generation, ensuring high performance and quick response times.
 
 ## Architecture Overview
 
