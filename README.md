@@ -1,57 +1,209 @@
-# Yoga Assistant
+# Yoga Assistant: Multimodal Yoga Q&A with Fine-Tuned LLMs
 
-## Objective
+A multimodal assistant that answers yoga-related queries with both text and image responses, powered by fine-tuned GPT-3.5 for text generation and a distilled Stable Diffusion model for yoga pose visualization.
 
-The Yoga Assistant is a multimodal tool designed to provide accurate and real-time responses to yoga-related queries, offering both text and image outputs. The assistant leverages fine-tuned GPT-3.5 for text generation and a distilled Stable Diffusion model for image generation, ensuring high performance and quick response times.
+![Architecture](/assets/yoga_assistant_architecture.png)
 
 ## Architecture Overview
 
-The architecture of the Yoga Assistant is built to efficiently handle both text and image queries through a scalable pipeline:
+The system operates through a three-stage pipeline:
 
-<img src="https://github.com/ashwin-sateesh/yoga-assistant/blob/main/assets/Yoga%20Assistant%20Workflow.png" alt="Yoga Assistant Architecture" width="700" height="900">
+**Stage 1 — Query Classification:** User input is analyzed to determine whether it requires a text response or an image response using keyword-based classification.
 
-1. **Input Query & Query Type Classification:**
-   - User queries are classified to know whether it is a text-based or image-based query.
+**Stage 2 — Text Processing (GPT-3.5 Pipeline):**
+- If the query contains a URL, the linked page is scraped and the content is injected into the prompt as context (RAG-style retrieval augmentation).
+- If no URL is present, the query is sent directly to the fine-tuned GPT-3.5 model.
+- A queue-based fine-tuning system enables incremental model updates: scraped content is formatted into training data and queued for background fine-tuning, so the model continuously improves without blocking inference.
 
-2. **Text Query Processing:**
-   - The text query processing is handled through a sophisticated, queue-based fine-tuning system:
-     - **Question and Link Check:** 
-       - Initially, the query is analyzed to determine if it includes a link that can be enhanced by web content.
-       - If the query is just a question without a link, it is directly passed to the fine-tuned GPT-3.5 model to generate a response.
-       - If the query contains a link, the question and the link are separated.
-     - **Web Scraping and Queue Integration:**
-       - The link is scraped, and the retrieved content is added to a processing queue.
-       - This scraped content enriches the original question, helping to form a new, more informed prompt.
-     - **Parallel Processing with RAG (Retrieval-Augmented Generation):**
-       - The newly generated prompt, combining the question and relevant content, is sent to the fine-tuned GPT-3.5 model.
-       - The fine-tuned model generates a response faster because the model is continuously updated with the latest data as it becomes available. 
-       - The RAG approach allows the model to provide real-time, accurate responses without waiting for comprehensive fine-tuning each time, as the model is automatically updated in the background.
+**Stage 3 — Image Generation (Stable Diffusion Pipeline):**
+- Image queries are routed to a fine-tuned Stable Diffusion model (CompVis/stable-diffusion-v1-4).
+- The original 1B+ parameter model was distilled to a smaller Latent Diffusion Model by pruning the UNet while preserving the Text Encoder and VAE, achieving 2x faster inference.
 
+## Project Structure
 
-3. **Image Query Processing:**
-   - Image queries utilize a fine-tuned Stable Diffusion model.
-   - The original model, containing over 1 billion parameters, was distilled to a simple Latent Diffusion Model half its size to reduce inference time.
-   - The distilled model generates and returns the image response.
+```
+yoga-assistant/
+├── configs/
+│   ├── __init__.py
+│   └── config.py              # PathConfig, GPTFineTuneConfig, StableDiffusionConfig, ScrapingConfig
+├── src/
+│   ├── __init__.py
+│   ├── preprocessing.py       # PDF extraction, text chunking, JSONL formatting
+│   ├── scraping.py            # URL extraction and web scraping
+│   ├── classifier.py          # Query type classification (text vs image)
+│   ├── finetuning.py          # OpenAI fine-tuning API, queue-based model updates
+│   ├── sd_data.py             # Stable Diffusion dataset preparation
+│   ├── inference.py           # YogaAssistant class, text and image generation
+│   └── evaluation.py          # Perplexity scoring
+├── scripts/
+│   ├── prepare_data.py        # PDF → JSONL data pipeline
+│   ├── prepare_sd_data.py     # Image directory → HuggingFace ImageFolder dataset
+│   ├── finetune_gpt.py        # GPT-3.5 fine-tuning via OpenAI API
+│   ├── finetune_sd.py         # Stable Diffusion fine-tuning via Accelerate
+│   ├── evaluate.py            # Response quality evaluation
+│   └── chat.py                # Interactive chatbot
+├── data/                      # Training data (not tracked in git)
+├── artifacts/                 # Model checkpoints (not tracked in git)
+├── assets/                    # Architecture diagrams
+├── requirements.txt
+├── .gitignore
+└── README.md
+```
 
-## Model Training & Evaluation
+## Models
 
-1. **Stable Diffusion Fine-tuning:**
-   - The Stable Diffusion model (CompVis/stable-diffusion-v1-4) was fine-tuned on a set of yoga images and corresponding text prompts. The fine-tuning was carried out at a resolution of 512x512 pixels for 3,000 steps, using the quantized `float16` datatype and A100 GPUs to optimize memory usage.
-   - The architecture of the Stable Diffusion model includes the following components:
-     - **UNet Model:** 859,520,964 parameters.
-     - **Text Encoder:** 123,060,480 parameters.
-     - **VAE Model:** 83,653,863 parameters.
-     - **Total Parameters:** 1,066,235,307 parameters.
-   - **Distillation Process:** For distillation, the UNet model was pruned while the Text Encoder and VAE components were kept intact. The model was then distilled using a distillation loss function, reducing the overall model size and improving inference time by 2x.
-   - For training details, refer to the [official Hugging Face documentation](https://github.com/huggingface/diffusers/tree/main/examples/text_to_image).
-   - CLIP scores were used to evaluate the text-to-image response quality.
+| Component | Model | Parameters | Details |
+|---|---|---|---|
+| Text Generation | GPT-3.5 Turbo (fine-tuned) | — | Fine-tuned via OpenAI API, 10 epochs, LR multiplier 0.1 |
+| Image Generation | Stable Diffusion v1.4 (fine-tuned) | 1.07B total | UNet: 860M, Text Encoder: 123M, VAE: 84M |
+| Distilled Image Gen | Latent Diffusion (pruned UNet) | ~500M | 2x inference speedup via UNet distillation |
+| Evaluation | GPT-2 | 124M | Perplexity scoring for text quality |
+| Evaluation | CLIP | — | Text-to-image alignment scoring |
 
-2. **GPT-3.5 Fine-tuning:**
-   - The GPT-3.5 Turbo model was fine-tuned using yoga-related datasets.
-   - For training details, refer to the [official OpenAI documentation](https://platform.openai.com/docs/guides/finetuing)
-   - Evaluation metrics included perplexity scores and semantic similarity to ensure high-quality responses.
-   
+## Setup
 
-## Acknowledgments
+```bash
+git clone https://github.com/ashwin-sateesh/yoga-assistant.git
+cd yoga-assistant
 
-This project leverages resources from the [Hugging Face diffusers repository](https://github.com/huggingface/diffusers) and [OpenAI Documentation](https://platform.openai.com/docs/guides). Special thanks to the developers and contributors to these tools.
+python -m venv venv
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+Set your OpenAI API key:
+
+```bash
+export OPENAI_API_KEY="your-api-key-here"
+```
+
+## Data Preparation
+
+**For GPT-3.5 fine-tuning** — convert yoga PDFs to training data:
+
+```bash
+python scripts/prepare_data.py \
+    --pdf-dir ./data/pdfs \
+    --output ./data/yoga_prompts_completions.jsonl
+```
+
+**For Stable Diffusion fine-tuning** — prepare an ImageFolder dataset:
+
+```bash
+python scripts/prepare_sd_data.py \
+    --image-dir ./data/yoga_poses \
+    --output-dir ./data/yoga_img_dataset
+```
+
+The image directory should contain subdirectories named after poses, each with image files:
+
+```
+data/yoga_poses/
+├── warrior_pose/
+│   ├── img1.jpg
+│   └── img2.jpg
+├── tree_pose/
+│   ├── img1.jpg
+│   └── img2.jpg
+└── ...
+```
+
+## Training
+
+**Fine-tune GPT-3.5:**
+
+```bash
+python scripts/finetune_gpt.py \
+    --data ./data/yoga_prompts_completions.jsonl \
+    --model gpt-3.5-turbo-0125 \
+    --epochs 10
+```
+
+**Fine-tune Stable Diffusion:**
+
+```bash
+# Clone the diffusers repo (one-time setup)
+git clone https://github.com/huggingface/diffusers
+pip install -U -r diffusers/examples/text_to_image/requirements.txt
+accelerate config default --mixed_precision fp16
+
+# Launch training
+python scripts/finetune_sd.py \
+    --dataset-dir ./data/yoga_img_dataset \
+    --output-dir ./artifacts/yoga-stable-diffusion-v1-4
+```
+
+## Evaluation
+
+```bash
+python scripts/evaluate.py \
+    --llm-model ft:gpt-3.5-turbo-0125:personal::XXXXX \
+    --queries "What are the benefits of Surya Namaskar?" "How to do Warrior pose?"
+```
+
+## Interactive Chat
+
+```bash
+python scripts/chat.py \
+    --llm-model ft:gpt-3.5-turbo-0125:personal::XXXXX \
+    --sd-model-path ./artifacts/yoga-stable-diffusion-v1-4 \
+    --sd-unet-path ./artifacts/yoga-stable-diffusion-v1-4/checkpoint-2500/unet
+```
+
+Example interaction:
+
+```
+Yoga Assistant
+----------------------------------------
+Hello! I'm your Yoga Assistant.
+I can answer yoga questions and generate yoga pose images.
+Type 'quit' to exit.
+
+You: What are the benefits of practicing yoga daily?
+Yoga Assistant: Practicing yoga daily offers numerous benefits including improved
+flexibility, strength, and balance. Regular practice also reduces stress...
+
+You: Show me the warrior pose
+Yoga Assistant: Image saved to ./outputs/images/generated_image.png
+
+You: quit
+Yoga Assistant: Goodbye! Namaste.
+```
+
+## Programmatic Usage
+
+```python
+from src.inference import YogaAssistant
+
+assistant = YogaAssistant(
+    llm_model="ft:gpt-3.5-turbo-0125:personal::XXXXX",
+    sd_model_path="./artifacts/yoga-stable-diffusion-v1-4",
+    sd_unet_path="./artifacts/yoga-stable-diffusion-v1-4/checkpoint-2500/unet",
+)
+
+# Text response
+answer = assistant.respond("What are the benefits of Surya Namaskar?")
+
+# Image response (returns path to saved image)
+image_path = assistant.respond("Show me the tree pose")
+
+# RAG-style response with URL context
+answer = assistant.respond(
+    "Summarize the yoga benefits from https://example.com/yoga-guide"
+)
+```
+
+## Key Design Decisions
+
+- **Queue-based incremental fine-tuning**: When users provide URLs, the scraped content is not only used for immediate RAG-style responses but also queued as fine-tuning data. The model improves continuously in the background without blocking inference.
+- **UNet distillation for Stable Diffusion**: Rather than serving the full 1B parameter model, the UNet was pruned and distilled while keeping the Text Encoder and VAE intact, cutting inference time in half with minimal quality loss.
+- **Keyword-based query classification**: A lightweight regex approach routes queries to text or image pipelines without requiring an additional classification model, keeping latency low.
+- **CLIP evaluation for image quality**: Text-to-image alignment is measured via CLIP scores rather than pixel-level metrics, capturing semantic relevance over visual fidelity.
+
+## References
+
+- Rombach et al., "High-Resolution Image Synthesis with Latent Diffusion Models" ([arXiv:2112.10752](https://arxiv.org/abs/2112.10752))
+- [HuggingFace Diffusers Text-to-Image Training](https://github.com/huggingface/diffusers/tree/main/examples/text_to_image)
+- [OpenAI Fine-Tuning Documentation](https://platform.openai.com/docs/guides/fine-tuning)
+
